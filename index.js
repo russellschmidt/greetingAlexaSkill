@@ -1,46 +1,51 @@
-exports.handler = function (event, context) {
-	// event is the JS object sent by request
-	// context is succeed & fail handling
+'use strict'
 
-	var request = event.request
+exports.handler = function(event, context){
+	try {
+		var request = event.request
 
-	if (request.type === 'IntentRequest') {
-		let options = {}
-		options.speechText = "Welcome to Greetings skill. Using our skill you can greet your guests. Whom do you want to greet? For example, you can say, say hello to Susan"
-		options.repromptText = "Whom do you want to greet? You can say, for example, say hello to John"
-		options.endSession = false
-		context.succeed(buildResponse(options))
-	} else if (request.type === 'LaunchRequest') {
-
-	} else if (request.type === 'SessionEndedRequest'){
-
-	} else {
-		context.fail("Unknown intent type")
-	}
-}
-
-function buildResponse(options) {
-	var response = {
-		version: "1.0",
-		response: {
-			outputSpeech: {
-				type: "PlainText",
-				text: options.speechText
-			},
-			shouldEndSession: options.endSession
-		}
-	}
-
-	if(options.repromptText) {
-		response.response.reprompt = {
-			outputSpeech: {
-				type: "PlainText",
-				text: options.repromptText
+		if (request.type === 'LaunchRequest') {
+			let options = {}
+			options.speechText = "Welcome to Uncle Rusty's Greetings skill. This skill greets your guests. Who shall we greet today? You can say, say hello to Bob?"
+			options.repromptText = "Whom shall we greet today? You can say, for example, say hello to Sally."
+			options.endSession = false
+			options.succeed(buildResponse(options))
+		} else if (request.type === 'IntentRequest') {
+			let options =	{}
+			if (request.intent.name === 'HelloIntent') {
+				let name = request.intent.slots.FirstName.value
+				options.speechText = "Hello " + name + ". "
+				options.speechText += getWish()
+				options.endSession = true
+				options.succeed(buildResponse(options))
+			} else {
+				throw "unknown intent"
 			}
+		} else if (request.type === "SessionEndedRequest") {
+			
+		}	else {
+			throw "Unknown intent type"
 		}
+	} catch (err) {
+		context.fail("Exception: " + err)
 	}
-
-	return response
 }
 
-console.log('... complete')
+function getWish () {
+	var currentDate = new Date()
+	var hours = currentDate.getUTCHours() - 8
+	if (hours < 0) {
+		hours = hours + 24
+	}
+
+	if (hours < 12) {
+		return "Good morning."
+	} else if (hours < 18) {
+		return "Good afternoon."
+	} else {
+		return "Good evening."
+	}
+}
+
+
+console.log('... end of script')
