@@ -9,7 +9,7 @@ exports.handler = function(event, context){
 			options.speechText = "Welcome to Uncle Rusty's Greetings skill. This skill greets your guests. Who shall we greet today? You can say, say hello to Bob?"
 			options.repromptText = "Whom shall we greet today? You can say, for example, say hello to Sally."
 			options.endSession = false
-			options.succeed(buildResponse(options))
+			context.succeed(buildResponse(options))
 		} else if (request.type === 'IntentRequest') {
 			let options =	{}
 			if (request.intent.name === 'HelloIntent') {
@@ -17,7 +17,7 @@ exports.handler = function(event, context){
 				options.speechText = "Hello " + name + ". "
 				options.speechText += getWish()
 				options.endSession = true
-				options.succeed(buildResponse(options))
+				context.succeed(buildResponse(options))
 			} else {
 				throw "unknown intent"
 			}
@@ -45,6 +45,28 @@ function getWish () {
 	} else {
 		return "Good evening."
 	}
+}
+
+function buildResponse (options) {
+	var response = {
+		version: '1.0',
+		response: {
+			outputSpeech: {
+				type: 'PlainText',
+				text: options.speechText
+			},
+			shouldEndSession: options.endSession
+		}
+	}
+
+	if (options.respromptText) {
+		response.response.reprompt = {
+			type: "PlainText",
+			text: options.repromptText
+		}
+	}
+
+	return response
 }
 
 
