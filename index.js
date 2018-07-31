@@ -1,12 +1,14 @@
 'use strict'
 
+const startingAudio = 'https://s3-us-west-2.amazonaws.com/att-news-quiz/audio/att_short.mp3'
+
 exports.handler = function(event, context){
 	try {
 		var request = event.request
 
 		if (request.type === 'LaunchRequest') {
-			let options = {}
-			options.speechText = "Welcome to Uncle Rusty's Greetings skill. This skill greets your guests. Who shall we greet today? You can say, say hello to Bob?"
+      let options = {}
+			options.speechText = "Welcome to Uncle Rusty's Greetings skill. This skill greets your guests. Who shall we greet today? You can say, say hello to Bob."
 			options.repromptText = "Whom shall we greet today? You can say, for example, say hello to Sally."
 			options.endSession = false
 			context.succeed(buildResponse(options))
@@ -52,14 +54,14 @@ function buildResponse (options) {
 		version: '1.0',
 		response: {
 			outputSpeech: {
-				type: 'PlainText',
-				text: options.speechText
+				type: "PlainText",
+        text: options.speechText,
 			},
 			shouldEndSession: options.endSession
 		}
 	}
 
-	if (options.respromptText) {
+	if (options.repromptText) {
 		response.response.reprompt = {
 			type: "PlainText",
 			text: options.repromptText
