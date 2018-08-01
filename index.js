@@ -18,9 +18,14 @@ exports.handler = function(event, context){
         handleHelloIntent(request, context)
       } else if (request.intent.name === 'QuoteIntent') {
         handleQuoteIntent(request, context, session)
-      } else if (request.intent.name === 'MoreQuoteIntent') {
-        handleMoreQuoteIntent(request, context, session)
-      }else {
+      } else if (request.intent.name === 'NextQuoteIntent') {
+        handleNextQuoteIntent(request, context, session)
+      } else if (request.intent.name === 'AMAZON.StopIntent' || request.intent.name === 'AMAZON.CancelIntent' ) {
+        context.succeed(buildResponse({
+          speechText: "Good bye. ",
+          endSession: true
+        }))
+      } else {
         throw "unknown intent"
       }
 		} else if (request.type === "SessionEndedRequest") {
@@ -60,8 +65,8 @@ function handleHelloIntent(request, context) {
 
 function handleQuoteIntent(request, context, session) {
   let options =	{}
+  options.session = session
 
-  options.speechText += getWish()
   getQuote(function (quote, error) {
     if (error) {
       context.fail(error)
@@ -69,14 +74,34 @@ function handleQuoteIntent(request, context, session) {
       options.speechText += quote
       options.speechText += " Do you want to hear one more quote?. "
       options.speechText += "You can say yes or one more. "
+      options.session.attributes.quoteIntent = true
       options.endSession = false
       context.succeed(buildResponse(options))
     }
   })
 }
 
-function handleMoreQuoteIntent(request, context, session) {
+function handleNextQuoteIntent(request, context, session) {
+  let options =	{}
+  options.session = session
 
+  if (session.attributes.quoteIntent) {
+    getQuote(function (quote, error) {
+      if (error) {
+        context.fail(error)
+      } else {
+        options.speechText += quote
+        options.speechText += " Do you want to hear one more quote?. "
+        options.speechText += "You can say yes or one more. "
+        options.endSession = false
+        context.succeed(buildResponse(options))
+      }
+    })
+  } else {
+    options.speechText = "Wrong invocation of this intent"
+    options.endSession = true
+    context.succeed(buildResponse(options))
+  }
 }
 
 function getQuote(callback) {
@@ -92,7 +117,12 @@ function getQuote(callback) {
     response.on('end', function() {
       body = body.replace(/\\/g,'') // remove extra escape character
       var quote = JSON.parse(body)
-      callback(quote.quoteText)
+      var quoteResponse = ""
+      if (!quote.quoteAuthor) {
+        quoteResponse = `As ${quote.quoteAuthor} once said, `
+      } 
+      quoteResponse += quote.quoteText
+      callback(quoteResponse)
     })
   })
 
@@ -134,7 +164,11 @@ function buildResponse (options) {
 			type: "SSML",
 			ssml: "<speak>" + options.repromptText + "</speak>"
 		}
-	}
+  }
+  
+  if (options.session && options.session.attributes) {
+    response.sessionAttributes = options.session.attributes
+  }
 
 	return response
 }
