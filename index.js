@@ -20,6 +20,8 @@ exports.handler = function(event, context){
         handleQuoteIntent(request, context, session)
       } else if (request.intent.name === 'NextQuoteIntent') {
         handleNextQuoteIntent(request, context, session)
+      } else if (request.intent.name === 'AMAZON.YesIntent' && (session.attributes.quoteIntent)) {
+        handleNextQuoteIntent(request, context, session)
       } else if (request.intent.name === 'AMAZON.StopIntent' || request.intent.name === 'AMAZON.CancelIntent' ) {
         context.succeed(buildResponse({
           speechText: "Good bye. ",
@@ -159,7 +161,7 @@ function buildResponse (options) {
 		}
 	}
 
-	if (options.respromptText) {
+	if (options.repromptText) {
 		response.response.reprompt = {
 			type: "SSML",
 			ssml: "<speak>" + options.repromptText + "</speak>"
