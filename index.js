@@ -5,41 +5,78 @@ var audio = "<audio src='https://s3-us-west-2.amazonaws.com/att-news-quiz/audio/
 
 exports.handler = function(event, context){
 	try {
-		var request = event.request
+    var request = event.request
+    var session = event.session
+    if(!event.session.attributes){
+      event.session.attributes = {}
+    }
 
 		if (request.type === 'LaunchRequest') {
-      let options = {}
-      options.speechText = audio
-			options.speechText += "Welcome to the A.T and T. news quiz. This skill greets your guests. Who shall we greet today? You can say, <emphasis level='strong'>say hello to Bob</emphasis>."
-			options.repromptText = "Whom shall we greet today? You can say, for example, say hello to Sally."
-			options.endSession = false
-			context.succeed(buildResponse(options))
+      handleLaunchRequest(context)
 		} else if (request.type === 'IntentRequest') {
-			let options =	{}
-			if (request.intent.name === 'HelloIntent') {
-				let name = request.intent.slots.FirstName.value
-				options.speechText = `Hello, ${name}, spelled <say-as interpret-as="spell-out">${name}</say-as>. `
-        options.speechText += getWish()
-        getQuote(function (quote, error) {
-          if (error) {
-            context.fail(error)
-          } else {
-            options.speechText += quote
-            options.endSession = true
-            context.succeed(buildResponse(options))
-          }
-        })
-			} else {
-				throw "unknown intent"
-			}
+      if (request.intent.name === 'HelloIntent') {
+        handleHelloIntent(request, context)
+      } else if (request.intent.name === 'QuoteIntent') {
+        handleQuoteIntent(request, context, session)
+      } else if (request.intent.name === 'MoreQuoteIntent') {
+        handleMoreQuoteIntent(request, context, session)
+      }else {
+        throw "unknown intent"
+      }
 		} else if (request.type === "SessionEndedRequest") {
-			
+			// something
 		}	else {
 			throw "Unknown intent type"
 		}
 	} catch (err) {
 		context.fail("Exception: " + err)
 	}
+}
+
+function handleLaunchRequest(context) {
+  let options = {}
+  options.speechText = audio
+  options.speechText += "Welcome to the A.T and T. news quiz. This skill greets your guests. Who shall we greet today? You can say, <emphasis level='strong'>say hello to Bob</emphasis>."
+  options.repromptText = "Whom shall we greet today? You can say, for example, say hello to Sally."
+  options.endSession = false
+  context.succeed(buildResponse(options))
+}
+
+function handleHelloIntent(request, context) {
+  let options =	{}
+  let name = request.intent.slots.FirstName.value
+  options.speechText = `Hello, ${name}, spelled <say-as interpret-as="spell-out">${name}</say-as>. I love you. `
+  options.speechText += getWish()
+  getQuote(function (quote, error) {
+    if (error) {
+      context.fail(error)
+    } else {
+      options.speechText += quote
+      options.endSession = true
+      context.succeed(buildResponse(options))
+    }
+  })
+}
+
+function handleQuoteIntent(request, context, session) {
+  let options =	{}
+
+  options.speechText += getWish()
+  getQuote(function (quote, error) {
+    if (error) {
+      context.fail(error)
+    } else {
+      options.speechText += quote
+      options.speechText += " Do you want to hear one more quote?. "
+      options.speechText += "You can say yes or one more. "
+      options.endSession = false
+      context.succeed(buildResponse(options))
+    }
+  })
+}
+
+function handleMoreQuoteIntent(request, context, session) {
+
 }
 
 function getQuote(callback) {
@@ -60,7 +97,7 @@ function getQuote(callback) {
   })
 
   request.on('error', function(error){
-    callback('', err)
+    callback('', error)
   })
 }
 
