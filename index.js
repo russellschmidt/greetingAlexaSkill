@@ -1,14 +1,16 @@
 'use strict'
 
 var http = require('http')
+var audio = "<audio src='https://s3-us-west-2.amazonaws.com/att-news-quiz/audio/att_short_alexa.mp3' />"
 
 exports.handler = function(event, context){
 	try {
 		var request = event.request
 
 		if (request.type === 'LaunchRequest') {
-			let options = {}
-			options.speechText = "Welcome to Uncle Rusty's Greetings skill. This skill greets your guests. Who shall we greet today? You can say, say hello to Bob?"
+      let options = {}
+      options.speechText = audio
+			options.speechText += "Welcome to the A.T and T. news quiz. This skill greets your guests. Who shall we greet today? You can say, <emphasis level='strong'>say hello to Bob</emphasis>."
 			options.repromptText = "Whom shall we greet today? You can say, for example, say hello to Sally."
 			options.endSession = false
 			context.succeed(buildResponse(options))
@@ -16,7 +18,7 @@ exports.handler = function(event, context){
 			let options =	{}
 			if (request.intent.name === 'HelloIntent') {
 				let name = request.intent.slots.FirstName.value
-				options.speechText = "Hello " + name + ". "
+				options.speechText = `Hello, ${name}, spelled <say-as interpret-as="spell-out">${name}</say-as>. `
         options.speechText += getWish()
         getQuote(function (quote, error) {
           if (error) {
@@ -70,11 +72,11 @@ function getWish () {
 	}
 
 	if (hours < 12) {
-		return "Good morning."
+		return "Good morning. "
 	} else if (hours < 18) {
-		return "Good afternoon."
+		return "Good afternoon. "
 	} else {
-		return "Good evening."
+		return "Good evening. "
 	}
 }
 
@@ -83,8 +85,8 @@ function buildResponse (options) {
 		version: '1.0',
 		response: {
 			outputSpeech: {
-				type: 'PlainText',
-				text: options.speechText
+				type: 'SSML',
+				ssml: "<speak>" + options.speechText + "</speak>"
 			},
 			shouldEndSession: options.endSession
 		}
@@ -92,8 +94,8 @@ function buildResponse (options) {
 
 	if (options.respromptText) {
 		response.response.reprompt = {
-			type: "PlainText",
-			text: options.repromptText
+			type: "SSML",
+			ssml: "<speak>" + options.repromptText + "</speak>"
 		}
 	}
 
