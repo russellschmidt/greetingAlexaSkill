@@ -1,5 +1,7 @@
 'use strict'
 
+var http = require('http')
+
 exports.handler = function(event, context){
 	try {
 		var request = event.request
@@ -15,9 +17,16 @@ exports.handler = function(event, context){
 			if (request.intent.name === 'HelloIntent') {
 				let name = request.intent.slots.FirstName.value
 				options.speechText = "Hello " + name + ". "
-				options.speechText += getWish()
-				options.endSession = true
-				context.succeed(buildResponse(options))
+        options.speechText += getWish()
+        getQuote(function (quote, error) {
+          if (err) {
+            context.fail(err)
+          } else {
+            options.speechText += quote
+            options.endSession = true
+            context.succeed(buildResponse(options))
+          }
+        })
 			} else {
 				throw "unknown intent"
 			}
@@ -29,6 +38,28 @@ exports.handler = function(event, context){
 	} catch (err) {
 		context.fail("Exception: " + err)
 	}
+}
+
+function getQuote(callback) {
+  var url = "http://api.forismatic.com/api/1.0/json?method=getQuote&lang=en&format=json"
+
+  var request = http.get(url, function(response) {
+    var body = ""
+
+    response.on('data', function(chunk) {
+      body += chunk
+    })
+
+    response.on('end', function() {
+      body = body.replace(/\\/g,'') // remove extra escape character
+      var quote = JSON.parse(body)
+      callback(quote.quoteText)
+    })
+  })
+
+  request.on('error', function(error){
+
+  })
 }
 
 function getWish () {
