@@ -19,8 +19,8 @@ exports.handler = function(event, context){
 				options.speechText = "Hello " + name + ". "
         options.speechText += getWish()
         getQuote(function (quote, error) {
-          if (err) {
-            context.fail(err)
+          if (error) {
+            context.fail(error)
           } else {
             options.speechText += quote
             options.endSession = true
