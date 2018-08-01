@@ -58,7 +58,7 @@ function getQuote(callback) {
   })
 
   request.on('error', function(error){
-
+    callback('', err)
   })
 }
 
