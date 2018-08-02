@@ -20,7 +20,7 @@ exports.handler = function(event, context){
         handleQuoteIntent(request, context, session)
       } else if (request.intent.name === 'NextQuoteIntent') {
         handleNextQuoteIntent(request, context, session)
-      } else if (request.intent.name === 'AMAZON.YesIntent' && (session.attributes.quoteIntent)) {
+      } else if (request.intent.name === 'AMAZON.YesIntent' && (session.attributes.quoteIntent === true)) {
         handleNextQuoteIntent(request, context, session)
       } else if (request.intent.name === 'AMAZON.StopIntent' || request.intent.name === 'AMAZON.CancelIntent' ) {
         context.succeed(buildResponse({
@@ -170,6 +170,24 @@ function buildResponse (options) {
   
   if (options.session && options.session.attributes) {
     response.sessionAttributes = options.session.attributes
+  }
+
+  if (options.cardTitle) {
+    response.response.card = {
+      type: "Simple",
+      title: options.cardTitle,
+      content: options.cardContent
+    }
+    if (options.imageUrl) {
+      response.response.card.type = "Standard",
+      response.response.card.text = options.cardContent,
+      response.response.card.image = {
+        smallImageUrl = options.smallImageUrl,
+        largeImageUrl = options.largeImageUrl
+      }
+    } else {
+      response.response.card.content = options.cardContent
+    }
   }
 
 	return response
